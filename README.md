@@ -120,3 +120,4 @@ This directory contains some extra pre-written code, and useful values.
 * No pre-written code yet for several ubiquitous algorithms, such as max flow.
 * Many routines intended for `graph.h` are not implemented yet.
 * No templates for "hacking" on CodeForces.
+* Some of the comments are still written in Polish.
