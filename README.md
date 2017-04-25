@@ -54,14 +54,14 @@ Google Code Jam or Facebook Hacker Cup. Typically, in these contests there is a 
 test file that contains, say, 100 cases. Thread engine works by assigning these cases
 to separate processes, thus making use of all your cores.
 
-To use threadengine, you need to put the comment `\\ proceed`` in your ``solveCase()``
-function in ``work.cpp``, just after the test case has been read. This will be replaced
-by the call to ``checkCase()`` in threadengine, which will decide whether to fork, to run the case on
+To use threadengine, you need to put the comment `\\ proceed` in your `solveCase()`
+function in `work.cpp`, just after the test case has been read. This will be replaced
+by the call to `checkCase()` in threadengine, which will decide whether to fork, to run the case on
 the "main" process, or to wait for the child processes to complete. The comment
-''\\ finish'' will call ``finish()``, which aggregates all the answers and outputs them.
-The comment ``\\ Eryx`` is replaced with `#include <threadengine.cpp>`.
+`\ finish` will call `finish()`, which aggregates all the answers and outputs them.
+The comment `\\ Eryx` is replaced with `#include <threadengine.cpp>`.
 
-The replacements are done by the Makefile (``make threaded``).
+The replacements are done by the Makefile (`make threaded`).
 
 ### graph.h
 
