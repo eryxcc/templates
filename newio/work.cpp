@@ -40,3 +40,4 @@ int main() {
 // This solution includes hidden routines to solve test cases in separate
 // processes in order to make it faster. I will update them to run on a
 // cluster if I get one ;)
+// See https://github.com/eryxcc/templates
