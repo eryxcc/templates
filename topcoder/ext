@@ -1,0 +1,8 @@
+#!/bin/sh
+for x in ../xfer/*.cpp
+do
+../templator/extractor $x
+done
+sed -i "s/isinf/std::isinf/g" *.txt
+sed -i "s/isnan/std::isnan/g" *.txt
+sed -i "s/std::std::/std::/g" *.txt

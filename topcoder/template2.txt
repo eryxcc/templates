@@ -1,0 +1,52 @@
+//EXTRACT
+
+//FILE $CLASSNAME$.cc
+#include <topcoder.h>
+#line 3 "$CLASSNAME$.cc"
+
+class $CLASSNAME$ {
+  public:
+  $RC$ $METHODNAME$($METHODPARMS$) {
+    // !FDI
+    return ;
+    }
+  };
+
+// BEGIN CUT HERE
+// templator options: 
+
+#include <$CLASSNAME$.h>
+
+int main() {
+  tester().run_test(-1); 
+  } 
+// END CUT HERE
+
+//FILE $CLASSNAME$.h
+
+/*
+$PROBLEMDESC$
+*/
+
+#define private public
+
+#include <string>
+#include <vector>
+#include <sstream>
+#include <iostream>
+
+vs pex(string s) {
+  s = s + "ˆ";
+  string q = "";
+  vs res;
+  for(int l=0; l<s.size(); l++) {
+    if(s[l] == 'ˆ') { res.push_back(q); q = "";}
+    else { q += s[l]; }
+    }
+  return res;
+  }
+  
+class tester : public $CLASSNAME$ {
+  $TESTCODE$
+  };
+

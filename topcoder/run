@@ -1,0 +1,7 @@
+#!/bin/sh
+export par="$1"
+export par=$(echo "$par" | sed -r "s/\..*$//")
+export auto="`ls *$par*.cc`"
+echo running source file: $auto
+export FDIFILE="$auto"
+make

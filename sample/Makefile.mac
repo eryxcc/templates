@@ -1,0 +1,71 @@
+INC=../inc/audio.h ../inc/graph.h ../inc/topcoder.h ../inc/client.h ../inc/luascript.h
+
+FLAGS=\
+  -O3 -std=c++0x -I../inc/ -Wall \
+  -I /opt/local/include/ \
+  -L /opt/local/lib/ -I /opt/local/include/SDL/ \
+  -DMAC
+
+SDL=-lSDL -framework Cocoa SDLMain.o -lSDL_ttf -lSDL_gfx -lSDL_mixer
+
+all: 
+	@echo podaj cel
+
+SDLMain.o: SDLMain.m
+	g++ -I /opt/local/include/SDL/ -c SDLMain.m -o SDLMain.o
+
+audio: audio.cpp $(INC)
+	g++ $(FLAGS) audio.cpp -o audio $(SDL)
+
+audio1: audio1.cpp $(INC)
+	g++ $(FLAGS) audio1.cpp -o audio1 $(SDL)
+
+luascript: luascript.cpp $(INC)
+	g++ $(FLAGS) -I/usr/include/lua5.1/ luascript.cpp -o luascript -llua5.1
+
+ui: ui.cpp $(INC)
+	g++ $(FLAGS) ui.cpp -o ui $(SDL) $(SDLTTF) -lgd
+
+obraz: obraz.cpp $(INC)
+	g++ $(FLAGS) obraz.cpp -o obraz $(SDL) $(SDLTTF) -lgd
+
+grafika: grafika.cpp $(INC) SDLMain.o
+	g++ $(FLAGS) grafika.cpp -o grafika $(SDL) $(SDLTTF) $(SDLGFX) -lgd
+
+svgout: svgout.cpp $(INC)
+	g++ $(FLAGS) svgout.cpp -o svgout $(SDL) $(SDLTTF) $(SDLGFX) -lgd
+
+server: server.cpp $(INC)
+	g++ $(FLAGS) server.cpp -o server
+
+client: client.cpp $(INC)
+	g++ $(FLAGS) client.cpp -o client
+
+uiclient: uiclient.cpp $(INC) SDLMain.o
+	g++ $(FLAGS) uiclient.cpp -o uiclient $(SDL) $(SDLTTF) -lgd
+
+threadtest: threadtest.cpp $(INC)
+	g++ $(FLAGS) threadtest.cpp -o threadtest $(SDL)
+
+mjpeg: mjpeg.cpp $(INC)
+	g++ $(FLAGS) mjpeg.cpp -o mjpeg $(SDL) -lgd $(SDLTTF)
+
+udp_eryx: udp_eryx.cpp $(INC)
+	g++ $(FLAGS) udp_eryx.cpp -o udp_eryx
+
+
+a: a.cpp $(INC)
+	g++ $(FLAGS) a.cpp -o a -lSDL -lSDL_ttf -lgd
+
+b: b.cpp $(INC)
+	g++ $(FLAGS) b.cpp -o b -lSDL -lSDL_ttf -lgd
+
+c: c.cpp $(INC)
+	g++ $(FLAGS) c.cpp -o c -lSDL -lSDL_ttf -lgd
+
+d: d.cpp $(INC)
+	g++ $(FLAGS) d.cpp -o d -lSDL -lSDL_ttf -lgd
+
+e: e.cpp $(INC)
+	g++ $(FLAGS) e.cpp -o e -lSDL -lSDL_ttf -lgd
+
