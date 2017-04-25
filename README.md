@@ -3,6 +3,11 @@ My templates for creating short programs. Mostly for programming contests,
 but they have other uses too. This uses mainly C++, and is written mainly for Linux, but
 should work in other operating systems, possibly with some work.
 
+### Credentials
+
+See [my achievements in programming contests](https://www.mimuw.edu.pl/~erykk/xe-contest.php).
+Many of these achievements have been obtained using various parts of this file.
+
 ## Important components
 
 ### topcoder.h
