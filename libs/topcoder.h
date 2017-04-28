@@ -1,11 +1,11 @@
+//@? includeinfo
+// Eryx's new template for I/O contests, May 3, 2015
 #ifndef _TOPCODER_H_
 #define _TOPCODER_H_
-
-// Eryx's new template for I/O contests, May 3, 2015
 //@@
 
 #include <algorithm>
-//@? string vs
+//@? string vs getLine getNum getStr getDouble getLL getVI
 #include <string>
 //@? vector vi vs vll
 #include <vector>
@@ -653,4 +653,5 @@ template<class T> T strtodata(const string& s) {
   return *((T*) s.c_str());
   }
 
+//@? includeinfo
 #endif

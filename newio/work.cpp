@@ -1,5 +1,4 @@
 #define BUFSIZE 1000000
-char buf[BUFSIZE];
 int Tests, cnum;
 // #define USEWIN
 #define MANYTESTS 1
@@ -20,7 +19,7 @@ void solveCase() {
 
   int N = getNum();
   
-  printf("Case #%d: %d\n", cnum, f0);
+  printf("Case #%d: %d\n", cnum, res);
   }
 
 #define P 1000000007
