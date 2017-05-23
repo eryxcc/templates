@@ -653,5 +653,20 @@ template<class T> T strtodata(const string& s) {
   return *((T*) s.c_str());
   }
 
+//@? XY XY1 GETX GETY GETXY MAXBOARD2 dxy4 dxy8
+
+#define MAXBOARD2 (MAXBOARD*MAXBOARD)
+#define XY(x,y) ((y)*MAXBOARD+(x))
+#define XY1(x,y) ((y)*MAXBOARD+(x)+(MAXBOARD+1))
+#define GETX(xy) ((xy)&(MAXBOARD-1))
+#define GETY(xy) ((int)(((unsigned)(xy))/MAXBOARD))
+#define GETXY(xy) GETX(xy), GETY(xy)
+
+//@? dxy4
+const int dxy4[4] = {1,MAXBOARD,-1,-MAXBOARD};
+
+//@? dxy8
+const int dxy8[8] = {MAXBOARD-1, MAXBOARD, MAXBOARD+1, 1, 1-MAXBOARD, -MAXBOARD, -1-MAXBOARD, -1};
+
 //@? includeinfo
 #endif
