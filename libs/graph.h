@@ -123,6 +123,8 @@ ld   operator ^  (const vec a, const vec b) { return a.x*b.y - a.y*b.x; }
 // scalar product
 ld   operator |  (const vec a, const vec b) { return a.x*b.x + a.y*b.y; }
 
+ld len(const vec& v) { return sqrt(v|v); }
+
 // complex multiplication
 vec  operator &  (const vec a, const vec b) { return vec(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x); }
 
@@ -180,6 +182,8 @@ xform operator * (const xform &a, const xform &b) {
     );
   }
 
+vec operator * (const xform &a, vec b) { b.tform(a); return b; }
+
 // vec operator * (const xform& x, const vec a) { return (a & x.amul) + x.shift; }
 
 // styles
@@ -236,6 +240,11 @@ struct line : picture {
   pic clone() const { return new line(b, v1, v2); }
   };
 
+#ifdef USDL
+extern SDL_Surface *surface; // ekran
+bool displaystr(int x, int y, int size, string str, int color, int alx, SDL_Surface *tgt = surface);
+#endif
+
 struct text : picture {
   style b;
   vec v;
@@ -248,6 +257,11 @@ struct text : picture {
       v.x, v.y, size, stylestr(b), txt.c_str()
       );
     }
+#ifdef USDL
+  void drawSDL(SDL_Surface *s) { 
+    displaystr(int(v.x), int(v.y), int(size), txt, b.fill, 0, s);
+    }
+#endif
   virtual void tform(const xform& x) { v.tform(x); printf("size not tf\n"); }
   pic clone() const { return new text(b, v, size, txt); }
   };
@@ -434,7 +448,7 @@ int textwidth(int siz, const string &str) {
   }
 
 // wypisuje napis, alx=0 (left align), alx=2 (right align), alx=1 (centralnie)
-bool displaystr(int x, int y, int size, string str, int color, int alx, SDL_Surface *tgt = surface) {
+bool displaystr(int x, int y, int size, string str, int color, int alx, SDL_Surface *tgt) {
 
 #ifdef UTTF
   if(str.size() == 0 || size <= 0) return false;
@@ -467,8 +481,9 @@ bool displaystr(int x, int y, int size, string str, int color, int alx, SDL_Surf
   return false;
   }
 
+#ifdef UGD
 #include <gd.h>
-
+#endif
 // tworzymy pomocniczy Surface
 SDL_Surface* emptySurface(int sx, int sy) {
   return SDL_CreateRGBSurface(SDL_SWSURFACE, sx, sy, 32, 0xFF<<16,0xFF<<8,0xFF,0xFF<<24);
@@ -476,6 +491,7 @@ SDL_Surface* emptySurface(int sx, int sy) {
 
 int alphamult = 1; // nie wiem czy 1 czy 2
 
+#ifdef UGD
 // Surface na podstawie GD
 SDL_Surface* GDtoSDL(gdImagePtr im) {
   SDL_Surface *s = emptySurface(im->sx, im->sy);
@@ -555,6 +571,8 @@ void writeJpg(const char *fname, SDL_Surface* s, int q) {
   gdImageDestroy(im);
   fclose(f);
   }
+#endif
 
 #endif
 #endif
+
