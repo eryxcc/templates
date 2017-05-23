@@ -668,5 +668,22 @@ const int dxy4[4] = {1,MAXBOARD,-1,-MAXBOARD};
 //@? dxy8
 const int dxy8[8] = {MAXBOARD-1, MAXBOARD, MAXBOARD+1, 1, 1-MAXBOARD, -MAXBOARD, -1-MAXBOARD, -1};
 
+//@? ansicol16
+
+void ansicol16(int col, FILE *f = stdout) {
+  int coltab[16] = {
+    30, 34, 32, 36, 31, 35, 33, 37,
+    30, 34, 32, 36, 31, 35, 33, 37
+    };
+  fprintf(f, "\033[%d;%dm", col >= 8 ? 1 : 2, coltab[col]);
+  }  
+
+//@? ansiclear
+
+void ansiclear(FILE *f = stdout) {
+  fprintf(f, "\033[0m");
+  }  
+
+
 //@? includeinfo
 #endif
