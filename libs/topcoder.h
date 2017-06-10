@@ -425,7 +425,7 @@ vi getVI() {
 #endif
   }
 
-//@? modar modarP
+//@? modar modarP seriessum
 #define TDEF template<int P>
 #define modarP modar<P>
 
@@ -655,6 +655,10 @@ template<class T> T strtodata(const string& s) {
 
 //@? XY XY1 GETX GETY GETXY MAXBOARD2 dxy4 dxy8
 
+#ifndef MAXBOARD
+#define MAXBOARD 64
+#endif
+
 #define MAXBOARD2 (MAXBOARD*MAXBOARD)
 #define XY(x,y) ((y)*MAXBOARD+(x))
 #define XY1(x,y) ((y)*MAXBOARD+(x)+(MAXBOARD+1))
@@ -684,6 +688,30 @@ void ansiclear(FILE *f = stdout) {
   fprintf(f, "\033[0m");
   }  
 
+//@? seriessum1
+modarP seriessum1(modarP qty, modarP val0) {
+  return qty * val0;
+  }
+
+//@? seriessum2
+modarP seriessum2(modarP qty, modarP val0, modarP val1) {
+  return qty * val0 + (val1-val0) * qty * (qty-1) / 2;
+  }
+
+//@? seriessum3
+modarP seriessum3(modarP qty, modarP val0, modarP val1, modarP val2) {
+  return 
+    qty * val0 + (val1-val0) * qty * (qty-1) / 2 +
+    (val2-(val1+val1-val0)) * qty * (qty-1) * (qty-2) / 6;
+  }
+
+//@? seriessum4
+modarP seriessum4(modarP qty, modarP val0, modarP val1, modarP val2, modarP val3) {
+  return 
+    qty * val0 + (val1-val0) * qty * (qty-1) / 2 +
+    (val2-(val1+val1-val0)) * qty * (qty-1) * (qty-2) / 6 +
+    (val3-val2*3+val1*3-val0) * qty * (qty-1) * (qty-2) * (qty-3) / 24;
+  }
 
 //@? includeinfo
 #endif
