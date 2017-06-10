@@ -5,7 +5,7 @@ int Tests, cnum;
 // #define LINEBYLINE
 
 #include <topcoder.h>
-#line 10 "work.cpp"
+#line 9 "work.cpp"
 
 /// ----
 
