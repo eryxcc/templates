@@ -71,8 +71,6 @@ typedef complex<ld> cld;
 #define LS <
 //@@
 #define Size(x) (int(x.size()))
-//@? LET
-#define LET(k,val) __typeof(val) k = (val)
 //@? CLC
 // execute "act", and return "val" as an expression result
 #define CLC(act,val) ([&] () {act; return (val); } ())
@@ -81,50 +79,53 @@ typedef complex<ld> cld;
 //@? 0rangecomm
 // All macros with parameters "k,a,b" run the "k" variable in range [a,b)
 //@? FOR
-#define FOR(k,a,b) for(__typeof(a) k=(a); k LS (b); ++k)
+#define FOR(k,a,b) for(auto k=(a); k LS (b); ++k)
 //@? FORREV
 // the range is traversed from b-1 to a in FORREV
-#define FORREV(k,a,b) for(__typeof(b) k=(b); (a) <= (--k);)
+#define FORREV(k,a,b) for(auto k=(b); (a) <= (--k);)
 //@@
 
 //@? EXISTS FORALL SUM PROD QXOR QAND QOR MAX MIN MAXTO MINTO SUMTO PRODTO SETOF
 // Standard mathematical quantifiers, plus tools to implement them
 //@? FIRST
 // find the first k in [a,b) that satisfies cond, or b if none
-#define FIRST(k,a,b,cond) CLC(LET(k, a); for(; k LS (b); ++k) if(cond) break, k)
+#define FIRST(k,a,b,cond) CLC(auto k=(a); for(; k LS (b); ++k) if(cond) break, k)
 //@? LAST
 // find the last k in [a,b) that satisfies cond, or a-1 if none
-#define LAST(k,a,b,cond) CLC(LET(k, b); while((a) <= (--k)) if(cond) break, k)
+#define LAST(k,a,b,cond) CLC(auto k=(b); while((a) <= (--k)) if(cond) break, k)
 //@? EXISTS
 #define EXISTS(k,a,b,cond) (FIRST(k,a,b,cond) LS (b))
 //@? FORALL
 #define FORALL(k,a,b,cond) (!EXISTS(k,a,b,!(cond)))
-//@? FOLD0
-#define FOLD0(k,a,b,init,act) CLC(LET(k, a); LET(R##k, init); for(; k LS (b); ++k) {act;}, R##k)
-//@? SUMTO SUM
+//@? FOLD0 SUMTO PRODTO
+#define FOLD0(k,a,b,init,act) CLC(LET(k, a); auto R##k = (init); for(; k LS (b); ++k) {act;}, R##k)
+//@? SUMTO
 #define SUMTO(k,a,b,init,x)  FOLD0(k,a,b,init,R##k += (x))
-//@? SUM
-#define SUM(k,a,b,x) SUMTO(k,a,b,(__typeof(x)) (0), x)
-//@? PRODTO PROD
+//@? PRODTO
 #define PRODTO(k,a,b,init,x) FOLD0(k,a,b,init,R##k *= (x))
+//@? FOLDOP0 SUM PROD QXOR AND AOR
+#define FOLDOP0(k,a,b,init,op,x) \
+  CLC(auto k=(a); auto tmp##k = [&](){ return x;}; decltype(tmp##k()) R##k = init; for(; k LS (b); ++k) { R##k op x;}, R##k)
+//@? SUM
+#define SUM(k,a,b,x) FOLDOP0(k,a,b,0,+=,x)
 //@? PROD
-#define PROD(k,a,b,x) PRODTO(k,a,b,(__typeof(x)) (1), x)
+#define PROD(k,a,b,x) FOLDOP0(k,a,b,1,*=,x)
 //@? QXOR
-#define QXOR(k,a,b,x) FOLD0(k,a,b,(__typeof(x)) (0), R##k ^= x)
+#define QXOR(k,a,b,x) FOLDOP0(k,a,b,0,^=,x)
 //@? QAND
-#define QAND(k,a,b,x) FOLD0(k,a,b,(__typeof(x)) (-1), R##k &= x)
+#define QAND(k,a,b,x) FOLDOP0(k,a,b,-1,&=,x)
 //@? QQOR
-#define QOR(k,a,b,x) FOLD0(k,a,b,(__typeof(x)) (-1), R##k |= x)
+#define QOR(k,a,b,x) FOLDOP0(k,a,b,0,|=,x)
 //@? FOLD1
 // note: the range has to be non-empty here
-#define FOLD1(k,a,b,init,act) CLC(LET(k, a); LET(R##k, init); for(++k; k LS (b); ++k) act, R##k)
+#define FOLD1(k,a,b,init,act) CLC(auto k=(a); auto R##k=(init); for(++k; k LS (b); ++k) act, R##k)
 //@? MAX
-// #define MAX(k,a,b,x) FOLD1(k,a,b,x, R##k >?= (x))
-//@? MIN
-// #define MIN(k,a,b,x) FOLD1(k,a,b,x, R##k <?= (x))
+#define MAX(k,a,b,x) FOLD1(k,a,b,x, R##k = max(R##k, x))
+//@? MIN FIRSTMIN
+#define MIN(k,a,b,x) FOLD1(k,a,b,x, R##k = min(R##k, x))
 //@? FIRSTMIN
 // return the first k for which x achieves the minimum
-// #define FIRSTMIN(k,a,b,x) (MIN(k,a,b,make_pair(x,k)).second)
+#define FIRSTMIN(k,a,b,x) (MIN(k,a,b,make_pair(x,k)).second)
 //@@
 
 //@? INF tcize
