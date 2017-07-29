@@ -1,4 +1,6 @@
 #include "easy.cpp"
+using namespace easy;
+
 int main() {
   string s;
   write("What's your name? ");

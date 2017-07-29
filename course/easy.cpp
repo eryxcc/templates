@@ -67,5 +67,3 @@ namespace easy {
   template<class... TT> void read(TT&... tt) { fread(cin, tt...);  };
     
   };
-
-using namespace easy;
