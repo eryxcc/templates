@@ -1,4 +1,8 @@
-** Introduction
+## WARNING
+
+This is a work in progress, and in a very early state.
+
+## Introduction
 
 There is a common opinion that one should not start learning programming with C++. 
 However, I believe that this opinion comes from some misconceptions programmers
@@ -28,7 +32,7 @@ Kernighan and Ritchie book, _Programming in C_. It is a very good book,
 but as far as I can tell, no good course exists to teach my favorite
 easy subset of C++. The purpose of this course is to fix this.
 
-** What will I be able to do after this programming course?
+## What will I be able to do after this programming course?
 
 * Solve puzzles. Computers are great in solving many kinds of puzzles,
 and learning programming will allow you to use this. The algorithmic
@@ -65,7 +69,7 @@ if your point is to earn money, this is probably not the best course.
 Other courses, and other languages than C++, will allow you to make
 money faster.
 
-** Why start in C++, not another language?
+## Why start in C++, not another language?
 
 The introduction has already explained why not start with C. Other
 popular programming languages include Python, Java and C#. So what
@@ -113,7 +117,7 @@ is very useful in many areas where the money is.)
 ** Languages such as C# or Java are popular, but I believe they focus
 too much on object oriented programming in my opinion.
 
-** Running your first program
+## Running your first program
 
 I believe that, among the operating systems, Linux is most friendly
 to programmers. Because of its shell. A shell allows you to
