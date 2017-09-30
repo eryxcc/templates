@@ -11,6 +11,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <map>
 
 #ifdef USDL
 #include <SDL/SDL.h>
@@ -232,6 +233,46 @@ char* stylestr(style &s) {
   return buf;
   }
 
+// surface
+//=========
+
+color errpixel;
+
+struct pixelrow {
+  color *v;
+  int size;
+  color& operator [] (int x) { if(x >= size || x < 0) return errpixel; else return v[x]; }
+  };
+
+struct bitmap {
+  SDL_Surface *s;
+  bool locked;
+  bool isscreen;
+  void draw() {
+    if(isscreen) beunlocked(), SDL_UpdateRect(s, 0, 0, 0, 0);
+    }
+  void belocked() {
+    if(isscreen && !locked) locked = true, SDL_LockSurface(s);
+    }
+  void beunlocked() {
+    if(isscreen && locked) locked = false, SDL_UnlockSurface(s);
+    }
+  pixelrow operator [] (int y) const {
+    if(y<0 || y>=s->h) return pixelrow {&errpixel, 1};
+    unsigned char *dst = (unsigned char*) s->pixels;
+    dst += y*s->pitch;
+    color* ptr = (color*) dst;
+    return pixelrow{ptr, s->w};
+    }
+  ~bitmap() { if(s && !isscreen) SDL_FreeSurface(s); }
+  };
+
+bitmap screen { NULL, false, true };
+
+bitmap surfaceToBitmap(SDL_Surface *s) {
+  return bitmap {s, true, false };
+  }
+
 // pictures
 //==========
 
@@ -245,7 +286,7 @@ typedef std::function<void(style&)> stylefun;
 struct picture {
   virtual void drawSvg(FILE *f) { printf("not implemented\n"); }
 #ifdef USDL
-  virtual void drawSDL(SDL_Surface *s) { printf("not implemented\n"); }
+  virtual void drawSDL(bitmap &tgt) { printf("not implemented\n"); }
 #endif
   virtual void tform(const xform& x) { printf("not implemented\n"); }
   virtual pic clone() const { return uclone<picture>(this); }
@@ -264,8 +305,8 @@ struct line : picture {
       );
     }
 #ifdef UGFX
-  void drawSDL(SDL_Surface *s) { 
-    aalineColor(s, v1.x, v1.y, v2.x, v2.y, ctgfx(b.stroke));
+  void drawSDL(bitmap &tgt) { 
+    aalineColor(tgt.s, v1.x, v1.y, v2.x, v2.y, ctgfx(b.stroke));
     }
 #endif
   virtual void onstyle(stylefun s) { s(b); }
@@ -275,27 +316,93 @@ struct line : picture {
   virtual rec bbox() { return rec(v1, b.width/2) | rec(v2, b.width/2); }
   };
 
-#ifdef USDL
-extern SDL_Surface *surface; // ekran
-bool displaystr(int x, int y, int size, string str, int color, int alx, SDL_Surface *tgt = surface);
-#endif
+struct fontdata {
+  string svgname;
+  string filename;
+  #ifdef UTTF
+  map<int, TTF_Font*> sizes;
+  #endif
+
+  #ifdef UTTF
+  ~fontdata() {
+    for(auto p: sizes) TTF_CloseFont(p.second);
+    }
+  #endif
+    
+  // pomocnicze
+  void zrobRozmiar(int siz) {
+  #ifdef UTTF
+    if(TTF_Init() != 0) {
+      printf("TTF error\n");
+      exit(2);
+      }
+    if(!sizes[siz]) {
+      sizes[siz] = TTF_OpenFont(fontfile, siz);
+      if (sizes[siz] == NULL) {
+        printf("error: Font error (%s)\n", TTF_GetError());
+        exit(1);
+        }
+      }
+  #endif
+    }
+  
+  // pomocnicze
+  vec textsize(int siz, const string &str) {
+  #ifdef UTTF
+    if(str.size() == 0) return vec(0,0);
+    
+    int w, h;
+    zrobRozmiar(siz);
+    TTF_SizeText(sizes[siz], str.c_str(), &w, &h);
+    return vec(w, h);
+  #else
+    return vec(0,0);
+  #endif
+    }  
+  };
+
+typedef shared_ptr<fontdata> font; 
+
+font makefont() { return make_shared<fontdata> (); }
+font makefont(string s) { auto ret = makefont(); ret->svgname = ret->filename = s; return ret; }
+font makefont(string fn, string sn) { auto ret = makefont(); ret->svgname = sn; ret->filename = fn; return ret;}
+
+font latex = makefont("latex");
+
+static const vec center = vec(.5, .5);
+static const vec rcenter = vec(1, .5);
+static const vec lcenter = vec(0, .5);
+static const vec tcenter = vec(.5, 0);
+static const vec bcenter = vec(.5, 1);
+static const vec topleft = vec(0, 0);
+static const vec topright = vec(1, 0);
+static const vec botleft = vec(0, 1);
+static const vec botright = vec(1, 1);
 
 struct text : picture {
   style b;
+  font ff;
   vec v;
+  vec anchor;
   ld size;
   string txt;
-  text(style _b, vec _v, ld _s, const string& _txt) : 
-    b(_b), v(_v), size(_s), txt(_txt) { }
+  text(style _b, font _f, vec _v, vec _a, ld _s, const string& _txt) : 
+    b(_b), ff(_f), v(_v), anchor(_a), size(_s), txt(_txt) { }
   void drawSvg(FILE *f) { 
-    fprintf(f, "<text x='%Lf' y='%Lf' font-size='%Lf' text-anchor='middle' %s>%s</text>\n",
-      v.x, v.y, size, stylestr(b), txt.c_str()
-      );
+    fprintf(f, "<text x='%Lf' y='%Lf' font-size='%Lf' ", v.x, v.y + size*(1-anchor.y), size);
+    if(ff->svgname != "" && ff->svgname != "latex") fprintf(f, "%s ", ff->svgname);
+    if(anchor.x == 0) fprintf(f, "text-anchor='start'");
+    if(anchor.x == .5) fprintf(f, "text-anchor='middle'");
+    if(anchor.x == 1) fprintf(f, "text-anchor='end'");
+    fprintf(f, " %s>", stylestr(b));
+    if(ff->svgname == "latex")
+      fprintf(f, "\\myfont{%f}{%s}", size, txt.c_str());
+    else
+      fprintf(f, "%s", txt.c_str());
+    fprintf(f, "</text>\n");
     }
 #ifdef USDL
-  void drawSDL(SDL_Surface *s) { 
-    displaystr(int(v.x), int(v.y), int(size), txt, b.fill, 0, s);
-    }
+  void drawSDL(bitmap &tgt);
 #endif
   virtual void onstyle(stylefun s) { s(b); }
   virtual void tform(const xform& x) { v.tform(x); size *= scalefactor(x); }
@@ -322,7 +429,7 @@ struct path : picture {
     fprintf(f, "\" %s/>\n", stylestr(b));
     }
 #ifdef UGFX
-  void drawSDL(SDL_Surface *s) { 
+  void drawSDL(bitmap &tgt) { 
     Sint16 sx[Size(lst)];
     Sint16 sy[Size(lst)];
     for(int i=0; i<Size(lst); i++) sx[i] = Sint16(lst[i].x), sy[i] = Sint16(lst[i].y);
@@ -330,13 +437,13 @@ struct path : picture {
 //  for(int i=0; i<Size(lst); i++) sx[i] = Sint16(lst[i].x), sy[i] = Sint16(lst[i].y);
 
     if(isfilled(b.fill))
-      filledPolygonColor(s, sx, sy, Size(lst), ctgfx(b.fill));
+      filledPolygonColor(tgt.s, sx, sy, Size(lst), ctgfx(b.fill));
     
     /* if(isfilled(b.stroke))
-      aapolygonColor(s, sx, sy, Size(lst), ctgfx(b.stroke)); */
+      aapolygonColor(tgt.s, sx, sy, Size(lst), ctgfx(b.stroke)); */
     
     for(int i=1; i<Size(lst); i++)
-      aalineColor(s, sx[i-1], sy[i-1], sx[i], sy[i], ctgfx(b.stroke));
+      aalineColor(tgt.s, sx[i-1], sy[i-1], sx[i], sy[i], ctgfx(b.stroke));
     }
 #endif
   virtual void onstyle(stylefun s) { s(b); }
@@ -364,11 +471,11 @@ struct circle : picture {
   virtual void tform(const xform& x) { center.tform(x); radius *= scalefactor(x); }
   virtual void onstyle(stylefun s) { s(b); }
 #ifdef UGFX
-  void drawSDL(SDL_Surface *s) { 
+  void drawSDL(bitmap &tgt) { 
     if(isfilled(b.fill))
-      filledCircleColor(s, Sint16(center.x), Sint16(center.y), Sint16(radius), ctgfx(b.fill));
+      filledCircleColor(tgt.s, Sint16(center.x), Sint16(center.y), Sint16(radius), ctgfx(b.fill));
     if(isfilled(b.stroke))
-      aacircleColor(s, Sint16(center.x), Sint16(center.y), Sint16(radius), ctgfx(b.stroke));
+      aacircleColor(tgt.s, Sint16(center.x), Sint16(center.y), Sint16(radius), ctgfx(b.stroke));
     }
 #endif
   virtual rec bbox() { return rec(center, radius + b.width/2); }
@@ -387,11 +494,9 @@ struct picturegroup : picture {
   void drawSvg(FILE *f) {
     for(int i=0; i<Size(v); i++) v[i]->drawSvg(f);
     }
-#ifdef UGFX
-  void drawSDL(SDL_Surface *s) {
-    for(int i=0; i<Size(v); i++) v[i]->drawSDL(s);
+  void drawSDL(bitmap &tgt) {
+    for(int i=0; i<Size(v); i++) v[i]->drawSDL(tgt);
     }
-#endif
   virtual void tform(const xform& x) { 
     for(int i=0; i<Size(v); i++) v[i]->tform(x);
     }
@@ -447,9 +552,9 @@ pic& operator += (pic& addto, const picture& addwhat) {
   }
 
 #ifdef USDL
-SDL_Surface* operator += (SDL_Surface* s, pic drawwhat) {
-  drawwhat.drawSDL(s);
-  return s;
+bitmap& operator += (bitmap& tgt, pic drawwhat) {
+  drawwhat->drawSDL(tgt);
+  return tgt;
   }
 #endif
 
@@ -458,13 +563,18 @@ void drawSvg(string fname, int width, int height, pic p) {
   s += p;
   }
 
-struct svg_normalizer {
-  string fname;
+struct normalizer {
   pic p;
+  normalizer& operator += (pic p1) { p += p1; return *this; }
+  normalizer& operator += (picture &p1) { p += p1; return *this; }
+
+  virtual ~normalizer() {}
+  };
+
+struct svg_normalizer : normalizer {
+  string fname;
   svg_normalizer(const string& s) : fname(s) {}
-  svg_normalizer& operator += (pic p1) { p += p1; return *this; }
-  svg_normalizer& operator += (picture &p1) { p += p1; return *this; }
-  ~svg_normalizer() {
+  ~svg_normalizer() {  
     if(!p) return;
     rec r = p->bbox();
     p->tform(xshift(-r.c1));
@@ -555,24 +665,6 @@ void addrect(float x1, float y1, float x2, float y2, float wi, int col, int icol
 
 #ifdef USDL
 
-int err;
-
-SDL_Surface *surface; // ekran
-
-#ifdef UTTF
-TTF_Font *font[256];
-#endif
-
-// zwraca podany piksel z podanego surface -- mozna na to pisac (po SDL_Lock)
-color& pix(int x, int y, SDL_Surface *s = surface) {
-  if(x<0 || y<0 || x>=s->w || y>=s->h) return err;
-  
-  unsigned char *dst = (unsigned char*) s->pixels;
-  dst += y*s->pitch;
-  color* ptr = (color*) dst;
-  return ptr[x];
-  }
-
 // inicjalizacja grafiki
 void initGraph(int sx, int sy, const string& title, int flags) {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -580,119 +672,87 @@ void initGraph(int sx, int sy, const string& title, int flags) {
     SDL_Quit();
     }
 
-  surface = SDL_SetVideoMode(sx, sy, 32, flags);
+  screen.s = SDL_SetVideoMode(sx, sy, 32, flags);
 
   SDL_WM_SetCaption(title.c_str(), 0);
   SDL_EnableKeyRepeat(500, 10);
   SDL_EnableUNICODE(1);
-
-#ifdef UTTF
-  if(TTF_Init() != 0) {
-    printf("TTF error\n");
-    exit(2);
-    }
-#endif
-  }
-
-// pomocnicze
-void zrobRozmiar(int siz) {
-#ifdef UTTF
-  if(!font[siz]) {
-    font[siz] = TTF_OpenFont(fontfile, siz);
-    if (font[siz] == NULL) {
-      printf("error: Font error (%s)\n", TTF_GetError());
-      exit(1);
-      }
-    }
-#endif
-  }
-
-// pomocnicze
-int textwidth(int siz, const string &str) {
-#ifdef UTTF
-  if(str.size() == 0) return 0;
-  
-  int w, h;
-  zrobRozmiar(siz);
-  TTF_SizeText(font[siz], str.c_str(), &w, &h);
-  return w;
-#else
-  return 0;
-#endif
   }
 
 // wypisuje napis, alx=0 (left align), alx=2 (right align), alx=1 (centralnie)
-bool displaystr(int x, int y, int size, string str, int color, int alx, SDL_Surface *tgt) {
-
+void text::drawSDL(bitmap &tgt) {
 #ifdef UTTF
-  if(str.size() == 0 || size <= 0) return false;
+  tgt.beunlocked();
+  int siz = int(size + .5);
+  if(txt.size() == 0 || size <= 0) return;
 
   SDL_Color col;
-  col.r = (color >> 16) & 255;
-  col.g = (color >> 8 ) & 255;
-  col.b = (color >> 0 ) & 255;
+  col.r = (b.fill >> 16) & 255;
+  col.g = (b.fill >> 8 ) & 255;
+  col.b = (b.fill >> 0 ) & 255;
   
-  zrobRozmiar(size);
+  ff->zrobRozmiar(size);
 
-  // SDL_Color black;
- 
-  SDL_Surface *txt = TTF_RenderUTF8_Blended(font[size], str.c_str(), col);
+  SDL_Surface *txtimg = TTF_RenderUTF8_Blended(ff->sizes[size], txt.c_str(), col);
   
-  if(txt == NULL) return false;
+  if(txtimg == NULL) return;
 
   SDL_Rect rect;
 
-  rect.w = txt->w;
-  rect.h = txt->h;
+  rect.w = txtimg->w;
+  rect.h = txtimg->h;
 
-  rect.x = x - rect.w * alx / 2;
-  rect.y = y;// - rect.h/2;
+  rect.x = int(v.x - rect.w * anchor.x);
+  rect.y = int(v.y - rect.h * anchor.y);
   
-  SDL_BlitSurface(txt, NULL, tgt, &rect); 
-  SDL_FreeSurface(txt);
-  
-#endif
-  return false;
+  SDL_BlitSurface(txtimg, NULL, tgt.s, &rect); 
+  SDL_FreeSurface(txtimg);
+  #endif
   }
 
 #ifdef UGD
 #include <gd.h>
 #endif
 // tworzymy pomocniczy Surface
-SDL_Surface* emptySurface(int sx, int sy) {
+SDL_Surface *emptySurface(int sx, int sy) {
   return SDL_CreateRGBSurface(SDL_SWSURFACE, sx, sy, 32, 0xFF<<16,0xFF<<8,0xFF,0xFF<<24);
+  }
+
+bitmap emptyBitmap(int sx, int sy) {
+  return bitmap {emptySurface(sx, sy)};
   }
 
 int alphamult = 1; // nie wiem czy 1 czy 2
 
 #ifdef UGD
 // Surface na podstawie GD
-SDL_Surface* GDtoSDL(gdImagePtr im) {
-  SDL_Surface *s = emptySurface(im->sx, im->sy);
+bitmap fromGD(gdImagePtr im) {
+  bitmap tgt = emptyBitmap(im->sx, im->sy);
   for(int y=0; y<im->sy; y++)
   for(int x=0; x<im->sx; x++) {
     if(im->trueColor)
-      pix(x, y, s) = im->tpixels[y][x];
+      tgt[y][x] = im->tpixels[y][x];
     else {
       int p = im->pixels[y][x];
-      int& px(pix(x, y, s));
+      color& px(tgt[y][x]);
       part(px, 2) = im->red[p];
       part(px, 1) = im->green[p];
       part(px, 0) = im->blue[p];
       part(px, 3) = 255 - alphamult * im->alpha[p];
       }
-    part(pix(x, y, s), 3) = 255 - alphamult * part(pix(x, y, s), 3);
+    part(tgt[y][x], 3) = 255 - alphamult * part(tgt[y][x], 3);
     }
-  return s;
+  return tgt;
   }
 
-// z GD do Surface
-gdImagePtr SDLtoGD(SDL_Surface* s) {
-  gdImagePtr im = gdImageCreateTrueColor(s->w, s->h);
+// convert bitmap to libgd
+gdImagePtr toGD(const bitmap &bmp) {
+  gdImagePtr im = gdImageCreateTrueColor(bmp.s->w, bmp.s->h);
   for(int y=0; y<im->sy; y++)
   for(int x=0; x<im->sx; x++) {
-    part(pix(x, y, s), 3) = (255 - part(pix(x, y, s), 3)) / 2;
-    im->tpixels[y][x] = pix(x, y, s);
+    color c = bmp[y][x];
+    part(c, 3) = 255 - part(c, 3);
+    im->tpixels[y][x] = c;
     }
   return im;
   }
@@ -700,36 +760,36 @@ gdImagePtr SDLtoGD(SDL_Surface* s) {
 // czytanie z .png
 // (wole uzywac biblioteki GD zamiast SDL_Image, bo w ten sposob moge tez
 // zapisywac)
-SDL_Surface* readPng(const char *fname) {
-  FILE *f = fopen(fname, "rb");
+bitmap readPng(const string& fname) {
+  FILE *f = fopen(fname.c_str(), "rb");
   gdImagePtr im = gdImageCreateFromPng(f);
-  SDL_Surface *s = GDtoSDL(im);
+  bitmap tgt = fromGD(im);
   gdImageDestroy(im);
   fclose(f);
-  return s;
+  return tgt;
   }
 
-SDL_Surface* readJpg(const char *fname) {
-  FILE *f = fopen(fname, "rb");
+bitmap readJpg(const string& fname) {
+  FILE *f = fopen(fname.c_str(), "rb");
   gdImagePtr im = gdImageCreateFromJpeg(f);
-  SDL_Surface *s = GDtoSDL(im);
+  bitmap tgt = fromGD(im);
   gdImageDestroy(im);
   fclose(f);
-  return s;
+  return tgt;
   }
 
-void writePng(const char *fname, SDL_Surface* s) {
-  FILE *f = fopen(fname, "wb");
-  gdImagePtr im = SDLtoGD(s);
+void writePng(const string& fname, const bitmap& bmp) {
+  FILE *f = fopen(fname.c_str(), "wb");
+  gdImagePtr im = toGD(bmp);
   gdImageSaveAlpha(im, 1);
   gdImagePng(im, f);
   gdImageDestroy(im);
   fclose(f);
   }
 
-void writePngAlpha(const char *fname, SDL_Surface* s) {
-  FILE *f = fopen(fname, "wb");
-  gdImagePtr im = SDLtoGD(s);
+void writePngAlpha(const string& fname, const bitmap& bmp) {
+  FILE *f = fopen(fname.c_str(), "wb");
+  gdImagePtr im = toGD(bmp);
   im->saveAlphaFlag = true;
   gdImageSaveAlpha(im, 1);
   gdImagePng(im, f);
@@ -737,14 +797,57 @@ void writePngAlpha(const char *fname, SDL_Surface* s) {
   fclose(f);
   }
 
-void writeJpg(const char *fname, SDL_Surface* s, int q) {
-  FILE *f = fopen(fname, "wb");
-  gdImagePtr im = SDLtoGD(s);
+void writeJpg(const string& fname, const bitmap& bmp, int quality) {
+  FILE *f = fopen(fname.c_str(), "wb");
+  gdImagePtr im = toGD(bmp);
   gdImageSaveAlpha(im, 1);
-  gdImageJpeg(im, f, q);
+  gdImageJpeg(im, f, quality);
   gdImageDestroy(im);
   fclose(f);
   }
+
+struct bmp_normalizer : normalizer {
+  
+  bitmap getBitmap(int bak = 0xFFFFFFFF) {  
+    rec r = p->bbox();
+    p->tform(xshift(-r.c1));
+    int sx = r.c2.x-r.c1.x;
+    int sy = r.c2.y-r.c1.y;
+    
+    bitmap res = emptyBitmap(sx, sy);
+    for(int y=0; y<sy; y++)
+    for(int x=0; x<sy; x++)
+      res[y][x] = bak;
+    res += p;
+    return res;
+    }
+  
+  void drawonscreen(int bak = 0xFFFFFFFF) {
+    rec r = p->bbox();
+    p->tform(xshift(-r.c1));
+    int sx = r.c2.x-r.c1.x;
+    int sy = r.c2.y-r.c1.y;
+    initGraph(sx, sy, "normalizer", 0);
+    for(int y=0; y<sy; y++)
+    for(int x=0; x<sy; x++)
+      screen[y][x] = bak;
+    screen += p;
+    screen.draw();
+    }
+  
+  void writePng(const string& fname) {
+    ::writePng(fname, getBitmap());
+    }
+
+  void writePngAlpha(const string& fname) {
+    ::writePngAlpha(fname, getBitmap());
+    }
+
+  void writeJpg(const string& fname, int quality) {
+    ::writeJpg(fname, getBitmap(), quality);
+    }
+  };
+
 #endif
 
 #endif
