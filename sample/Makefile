@@ -49,3 +49,15 @@ udp_eryx: udp_eryx.cpp $(INC)
 
 udp_eryx_listen: udp_eryx_listen.cpp $(INC)
 	g++ $(FLAGS) udp_eryx_listen.cpp -o udp_eryx_listen
+
+text-latex: text-latex.cpp ../libs/graph2.h
+	g++ text-latex.cpp -o text-latex -lSDL -lSDL_ttf -I/usr/include/SDL/ -lSDL_gfx -lgd
+
+text-latex.svg: text-latex
+	./text-latex
+
+text-latex.pdf: text-latex.svg
+	inkscape text-latex.svg -A text-latex.pdf --export-latex
+
+latex-test.pdf: latex-test.tex text-latex.pdf
+	pdflatex latex-test.tex
