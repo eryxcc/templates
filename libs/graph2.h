@@ -396,7 +396,7 @@ struct text : picture {
     if(anchor.x == 1) fprintf(f, "text-anchor='end'");
     fprintf(f, " %s>", stylestr(b));
     if(ff->svgname == "latex")
-      fprintf(f, "\\myfont{%f}{%s}", size, txt.c_str());
+      fprintf(f, "\\myfont{%lf}{%s}", double(size), txt.c_str());
     else
       fprintf(f, "%s", txt.c_str());
     fprintf(f, "</text>\n");
