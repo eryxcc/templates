@@ -351,7 +351,7 @@ struct fontdata {
   // pomocnicze
   vec textsize(int siz, const string &str) {
   #ifdef UTTF
-    if(str.size() == 0) return vec(0,0);
+    if(str.size() == 0 || siz <= 0) return vec(0,0);
     
     int w, h;
     zrobRozmiar(siz);
@@ -409,7 +409,7 @@ struct text : picture {
   virtual void onstyle(stylefun s) { s(b); }
   virtual void tform(const xform& x) { v.tform(x); size *= scalefactor(x); }
   virtual pic clone() const { return uclone<text>(this); }
-  virtual rec bbox() { return rec(v, size/2); }
+  virtual rec bbox();
   };
 
 struct path : picture {
@@ -701,16 +701,16 @@ void text::drawSDL(bitmap &tgt) {
 #ifdef UTTF
   tgt.beunlocked();
   int siz = int(size + .5);
-  if(txt.size() == 0 || size <= 0) return;
+  if(txt.size() == 0 || siz <= 0) return;
 
   SDL_Color col;
   col.r = (b.fill >> 16) & 255;
   col.g = (b.fill >> 8 ) & 255;
   col.b = (b.fill >> 0 ) & 255;
   
-  ff->zrobRozmiar(size);
+  ff->zrobRozmiar(siz);
 
-  SDL_Surface *txtimg = TTF_RenderUTF8_Blended(ff->sizes[size], txt.c_str(), col);
+  SDL_Surface *txtimg = TTF_RenderUTF8_Blended(ff->sizes[siz], txt.c_str(), col);
   
   if(txtimg == NULL) return;
 
@@ -725,6 +725,20 @@ void text::drawSDL(bitmap &tgt) {
   SDL_BlitSurface(txtimg, NULL, tgt.s, &rect); 
   SDL_FreeSurface(txtimg);
   #endif
+  }
+
+rec text::bbox() {
+  int siz = int(size + .5);
+
+  ff->zrobRozmiar(siz);
+  
+  vec siz = ff->textsize(siz, txt);
+  
+  rec rect;
+  rect.c1 = v - siz * anchor;
+  rect.c2 = rect.c1 + siz;
+  
+  return rect;
   }
 
 #ifdef UGD
