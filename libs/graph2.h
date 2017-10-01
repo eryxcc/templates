@@ -244,6 +244,7 @@ struct pixelrow {
   color& operator [] (int x) { if(x >= size || x < 0) return errpixel; else return v[x]; }
   };
 
+#ifdef USDL
 struct bitmap {
   SDL_Surface *s;
   bool locked;
@@ -272,6 +273,7 @@ bitmap screen { NULL, false, true };
 bitmap surfaceToBitmap(SDL_Surface *s) {
   return bitmap {s, true, false };
   }
+#endif
 
 // pictures
 //==========
@@ -497,9 +499,11 @@ struct picturegroup : picture {
   void drawSvg(FILE *f) {
     for(int i=0; i<Size(v); i++) v[i]->drawSvg(f);
     }
+#ifdef USDL
   void drawSDL(bitmap &tgt) {
     for(int i=0; i<Size(v); i++) v[i]->drawSDL(tgt);
     }
+#endif
   virtual void tform(const xform& x) { 
     for(int i=0; i<Size(v); i++) v[i]->tform(x);
     }
