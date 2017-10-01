@@ -294,7 +294,7 @@ struct picture {
   virtual pic clone() const { return uclone<picture>(this); }
   virtual ~picture() {}
   virtual void onstyle(stylefun s) {}
-  virtual rec bbox() { return emptyrec; }
+  virtual rec bbox() const { return emptyrec; }
   };
 
 struct line : picture {
@@ -315,7 +315,7 @@ struct line : picture {
   virtual void tform(const xform& x) { v1.tform(x); v2.tform(x); }
   virtual pic clone() const { return uclone<line>(this); }
 
-  virtual rec bbox() { return rec(v1, b.width/2) | rec(v2, b.width/2); }
+  virtual rec bbox() const { return rec(v1, b.width/2) | rec(v2, b.width/2); }
   };
 
 struct fontdata {
@@ -409,7 +409,7 @@ struct text : picture {
   virtual void onstyle(stylefun s) { s(b); }
   virtual void tform(const xform& x) { v.tform(x); size *= scalefactor(x); }
   virtual pic clone() const { return uclone<text>(this); }
-  virtual rec bbox();
+  virtual rec bbox() const;
   };
 
 struct path : picture {
@@ -456,7 +456,7 @@ struct path : picture {
     for(int i=0; i<Size(lst); i++) lst[i].tform(x);
     }
   virtual pic clone() const { return uclone<path>(this); }
-  virtual rec bbox() { 
+  virtual rec bbox() const { 
     rec res = emptyrec;
     for(vec v: lst) res = res | rec(v, b.width/2);
     return res;
@@ -483,7 +483,7 @@ struct circle : picture {
       aacircleColor(tgt.s, Sint16(center.x), Sint16(center.y), Sint16(radius), ctgfx(b.stroke));
     }
 #endif
-  virtual rec bbox() { return rec(center, radius + b.width/2); }
+  virtual rec bbox() const { return rec(center, radius + b.width/2); }
   };
 
 struct picturegroup : picture {
@@ -510,7 +510,7 @@ struct picturegroup : picture {
   virtual void onstyle(stylefun s) { 
     for(int i=0; i<Size(v); i++) v[i]->onstyle(s);
     }
-  virtual rec bbox() { 
+  virtual rec bbox() const { 
     rec res = emptyrec;
     for(pic p: v) res = res | p->bbox();
     return res;
@@ -680,6 +680,19 @@ void addrect(float x1, float y1, float x2, float y2, float wi, int col, int icol
   }
 */
 
+rec text::bbox() const {
+  int siz = int(size + .5);
+
+  ff->zrobRozmiar(siz);
+  
+  vec sizv = ff->textsize(siz, txt);
+  
+  rec rect(v - sizv * anchor, v);
+  rect.c2 = rect.c1 + sizv;
+  
+  return rect;
+  }
+
 #ifdef USDL
 
 // inicjalizacja grafiki
@@ -725,20 +738,6 @@ void text::drawSDL(bitmap &tgt) {
   SDL_BlitSurface(txtimg, NULL, tgt.s, &rect); 
   SDL_FreeSurface(txtimg);
   #endif
-  }
-
-rec text::bbox() {
-  int siz = int(size + .5);
-
-  ff->zrobRozmiar(siz);
-  
-  vec siz = ff->textsize(siz, txt);
-  
-  rec rect;
-  rect.c1 = v - siz * anchor;
-  rect.c2 = rect.c1 + siz;
-  
-  return rect;
   }
 
 #ifdef UGD
