@@ -413,8 +413,9 @@ struct text : picture {
 struct path : picture {
   style b;
   vector<vec> lst;
+  bool cycled;
   path(style _b) : b(_b)  { }
-  path(style _b, const vector<vec>& _l) : b(_b), lst(_l) { }
+  path(style _b, const vector<vec>& _l, bool _cycled = false) : b(_b), lst(_l), cycled(_cycled) { }
   void add(vec v) { lst.push_back(v); }
   void drawSvg(FILE *f) { 
     if(Size(lst) < 2) return;
@@ -425,6 +426,8 @@ struct path : picture {
         fprintf(f, " L ");
       fprintf(f, "%Lf %Lf", lst[i].x, lst[i].y);
       }
+    
+    if(cycled) fprintf(f, " Z");
     
     fprintf(f, "\" %s/>\n", stylestr(b));
     }
@@ -551,6 +554,16 @@ pic& operator += (pic& addto, const picture& addwhat) {
   return (addto += addwhat.clone());
   }
 
+pic operator * (const xform& xf, pic what) {
+  pic w1 = what->clone(); w1->tform(xf);
+  return w1;
+  }
+
+pic operator * (const xform& xf, const picture& what) {
+  pic w1 = what.clone(); w1->tform(xf);
+  return w1;
+  }
+
 #ifdef USDL
 bitmap& operator += (bitmap& tgt, pic drawwhat) {
   drawwhat->drawSDL(tgt);
@@ -566,7 +579,7 @@ void drawSvg(string fname, int width, int height, pic p) {
 struct normalizer {
   pic p;
   normalizer& operator += (pic p1) { p += p1; return *this; }
-  normalizer& operator += (picture &p1) { p += p1; return *this; }
+  normalizer& operator += (const picture &p1) { p += p1; return *this; }
 
   virtual ~normalizer() {}
   };
