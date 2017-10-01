@@ -220,15 +220,17 @@ vec operator * (const xform &a, vec b) { b.tform(a); return b; }
 struct style {
   int stroke, fill;
   ld width; // uwaga: 'width' dziala tylko w drawSvg, nie w drawSDL
+  string extra;
   style(int st, int fi, ld wi) : stroke(st), fill(fi), width(wi) {}
   };
 
 char* stylestr(style &s) {
   static char buf[600];
-  sprintf(buf, "style=\"stroke:#%06x;stroke-opacity:%.3Lf;stroke-width:%Lfpx;fill:#%06x;fill-opacity:%.3Lf\"",
+  sprintf(buf, "style=\"stroke:#%06x;stroke-opacity:%.3Lf;stroke-width:%Lfpx;fill:#%06x;fill-opacity:%.3Lf%s\"",
     s.stroke & 0xFFFFFF, cta(s.stroke),
     s.width,
-    s.fill & 0xFFFFFF, cta(s.fill)
+    s.fill & 0xFFFFFF, cta(s.fill),
+    s.extra.c_str()
     );
   return buf;
   }
@@ -392,11 +394,13 @@ struct text : picture {
     b(_b), ff(_f), v(_v), anchor(_a), size(_s), txt(_txt) { }
   void drawSvg(FILE *f) { 
     fprintf(f, "<text x='%Lf' y='%Lf' font-size='%Lf' ", v.x, v.y + size*(1-anchor.y), size);
-    if(ff->svgname != "" && ff->svgname != "latex") fprintf(f, "%s ", ff->svgname);
+    style b2 = b;
+    if(ff->svgname != "" && ff->svgname != "latex") 
+      b2.extra += ff->svgname;
     if(anchor.x == 0) fprintf(f, "text-anchor='start'");
     if(anchor.x == .5) fprintf(f, "text-anchor='middle'");
     if(anchor.x == 1) fprintf(f, "text-anchor='end'");
-    fprintf(f, " %s>", stylestr(b));
+    fprintf(f, " %s>", stylestr(b2));
     if(ff->svgname == "latex")
       fprintf(f, "\\myfont{%lf}{%s}", double(size), txt.c_str());
     else
