@@ -33,8 +33,7 @@ void wizualizacja() {
 void klawisze() {
   SDL_Event event;
   SDL_Delay(1);
-  bool ev = SDL_PollEvent(&event);
-  if(ev) switch (event.type) {
+  while(ev = SDL_PollEvent(&event)) switch (event.type) {
     case SDL_QUIT:
       exit(1);
       return;

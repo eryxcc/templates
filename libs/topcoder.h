@@ -98,7 +98,7 @@ typedef complex<ld> cld;
 //@? FORALL
 #define FORALL(k,a,b,cond) (!EXISTS(k,a,b,!(cond)))
 //@? FOLD0 SUMTO PRODTO
-#define FOLD0(k,a,b,init,act) CLC(LET(k, a); auto R##k = (init); for(; k LS (b); ++k) {act;}, R##k)
+#define FOLD0(k,a,b,init,act) CLC(auto k = (a); auto R##k = (init); for(; k LS (b); ++k) {act;}, R##k)
 //@? SUMTO
 #define SUMTO(k,a,b,init,x)  FOLD0(k,a,b,init,R##k += (x))
 //@? PRODTO
@@ -225,8 +225,8 @@ string its(int i) {char buf[200]; sprintf(buf, "%d", i); return buf;}
 //@? 0stream
 template<class T> ostream& operator<<(ostream& os, const vector<T>& v) {
   os << "{";
-  for(LET(k,v.begin()); k != v.end(); ++k) {
-    os << (*k); os << ",";
+  for(auto& k: v) {
+    os << k; os << ",";
     }
   os << "}";
   return os;
@@ -239,8 +239,8 @@ template<class T, class U> ostream& operator<<(ostream& os, const pair<T,U>& p) 
 //@? ostream & set
 template<class T> ostream& operator<<(ostream& os, const set<T>& v) {
   os << "{";
-  for(LET(k,v.begin()); k != v.end(); ++k) {
-    os << (*k); os << ",";
+  for(auto& k: v) {
+    os << k; os << ",";
     }
   os << "}";
   return os;
@@ -322,12 +322,12 @@ void calcBinom() {
 // using binary search
 #define BINFIRST(k,a,b,cond)          \
   CLC(                                \
-    LET(Type, a+b);                   \
-    LET(k##mIn, (__typeof(Type))(a)); LET(k##mAx, (__typeof(Type))(b));   \
+    auto Type = a+b;                  \
+    __typeof(Type) k##mIn = a;        \
+    __typeof(Type) k##mAx = b;        \
     while(k##mIn != k##mAx) {         \
-      LET(k, (k##mIn>>1)+(k##mAx>>1)+ \
-      (((k##mIn&1)+(k##mAx&1))>>1)    \
-      ); \
+      auto k = (k##mIn>>1)+(k##mAx>>1)+ \
+      (((k##mIn&1)+(k##mAx&1))>>1);   \
       if(cond) k##mAx = k;            \
       else k##mIn = k+1;              \
       },                              \
@@ -690,24 +690,24 @@ void ansiclear(FILE *f = stdout) {
   }  
 
 //@? seriessum1
-modarP seriessum1(modarP qty, modarP val0) {
+TDEF modarP seriessum1(modarP qty, modarP val0) {
   return qty * val0;
   }
 
 //@? seriessum2
-modarP seriessum2(modarP qty, modarP val0, modarP val1) {
+TDEF modarP seriessum2(modarP qty, modarP val0, modarP val1) {
   return qty * val0 + (val1-val0) * qty * (qty-1) / 2;
   }
 
 //@? seriessum3
-modarP seriessum3(modarP qty, modarP val0, modarP val1, modarP val2) {
+TDEF modarP seriessum3(modarP qty, modarP val0, modarP val1, modarP val2) {
   return 
     qty * val0 + (val1-val0) * qty * (qty-1) / 2 +
     (val2-(val1+val1-val0)) * qty * (qty-1) * (qty-2) / 6;
   }
 
 //@? seriessum4
-modarP seriessum4(modarP qty, modarP val0, modarP val1, modarP val2, modarP val3) {
+TDEF modarP seriessum4(modarP qty, modarP val0, modarP val1, modarP val2, modarP val3) {
   return 
     qty * val0 + (val1-val0) * qty * (qty-1) / 2 +
     (val2-(val1+val1-val0)) * qty * (qty-1) * (qty-2) / 6 +

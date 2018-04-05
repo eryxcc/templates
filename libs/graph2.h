@@ -34,7 +34,10 @@ typedef unsigned char Uint8;
 
 using namespace std;
 
+#ifndef LD_DEFINED
 typedef long double ld;
+#endif
+
 #ifndef Size
 #define Size(x) (int((x).size()))
 #endif
@@ -396,7 +399,7 @@ struct text : picture {
     fprintf(f, "<text x='%Lf' y='%Lf' font-size='%Lf' ", v.x, v.y + size*(1-anchor.y), size);
     style b2 = b;
     if(ff->svgname != "" && ff->svgname != "latex") 
-      b2.extra += ff->svgname;
+      b2.extra = ff->svgname + b2.extra;
     if(anchor.x == 0) fprintf(f, "text-anchor='start'");
     if(anchor.x == .5) fprintf(f, "text-anchor='middle'");
     if(anchor.x == 1) fprintf(f, "text-anchor='end'");

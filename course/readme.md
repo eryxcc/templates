@@ -114,6 +114,7 @@ and it is better to start learning programming without it. It is not
 necessary in many areas of programming, including the ones which
 are the focus of this course. (Though, it
 is very useful in many areas where the money is.)
+
 ** Languages such as C# or Java are popular, but I believe they focus
 too much on object oriented programming in my opinion.
 
