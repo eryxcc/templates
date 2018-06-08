@@ -348,7 +348,7 @@ struct fontdata {
       exit(2);
       }
     if(!sizes[siz]) {
-      sizes[siz] = TTF_OpenFont(fontfile, siz);
+      sizes[siz] = TTF_OpenFont(filename.c_str(), siz);
       if (sizes[siz] == NULL) {
         printf("error: Font error (%s)\n", TTF_GetError());
         exit(1);
