@@ -479,14 +479,15 @@ template<class T> struct matrix {
   vector<T> data;
   matrix(int _r, int _c) : rows(_r), cols(_c), data(_r*_c) {}
   T* operator [] (int rowid) { return &data[cols * rowid]; }
+  const T* operator [] (int rowid) const { return &data[cols * rowid]; }
   };
 
 template<class T> matrix<T> operator += (matrix<T>& A, matrix<T> B) {
-  FOR(i,0,Size(A.data)) A[i] += B[i]; return A;
+  FOR(i,0,Size(A.data)) A.data[i] += B.data[i]; return A;
   }
 
 template<class T> matrix<T> operator -= (matrix<T>& A, matrix<T> B) {
-  FOR(i,0,Size(A.data)) A[i] -= B[i]; return A;
+  FOR(i,0,Size(A.data)) A.data[i] -= B.data[i]; return A;
   }
 
 template<class T> matrix<T> operator + (matrix<T> A, matrix<T> B) { return A+=B; }
@@ -499,6 +500,13 @@ template<class T> matrix<T> operator * (matrix<T> A, matrix<T> B) {
     for(int j=0; j<A.cols; j++) Cval += A[i][j] * B[j][k];
     C[i][k] = Cval;
     }
+  return C;
+  }
+
+template<class T> matrix<T> operator * (matrix<T> A, T x) { 
+  matrix<T> C(A.rows, A.cols);
+  for(int i=0; i<A.rows; i++) for(int k=0; k<A.cols; k++)
+    C[i][k] = A[i][k] * x;
   return C;
   }
 
