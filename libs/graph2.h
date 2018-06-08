@@ -1,5 +1,5 @@
-// biblioteka do kolorow, grafiki, i zapisu w SDL i w formacie SVG
-// w trakcie budowy - Eryk Kopczynski
+// library for: colors, graphics, display/saving (SDL, SVG, PNG, JPG)
+// in construction - Eryk Kopczynski
 
 #ifndef _GRAPH_H_
 #define _GRAPH_H_
@@ -59,7 +59,7 @@ ld cta(color col) {
 
 bool isfilled(color col) { return col & 0xFF000000; }
 
-// SDL_gfx wymaga koloru w innym formacie...
+// SDL_gfx requires another color format...
 int ctgfx(color col) {
   return (col << 8) | ((col >> 24) & 0xFF);
   // (col & 0xFFFFFF) << 8 + (Uint32(col & 0xFF000000)) >> 24;
@@ -70,12 +70,12 @@ int gltc(color col) {
   // (col & 0xFFFFFF) << 8 + (Uint32(col & 0xFF000000)) >> 24;
   }
 
-// mieszanie 2 kolorow (bez alpha)
+// mixing 2 colors (no alpha)
 color mixcolor(color col, color ncol) {
   return ((col&0xFEFEFEFE) + (ncol&0xFEFEFEFE)) >> 1;
   }
 
-// i-ta skladowa koloru (0=B, 1=G, 2=R, 3=A), mozna zapisywac
+// i-th component of a color (0=B, 1=G, 2=R, 3=A)
 colorpart& part(color& col, int i) {
   colorpart* c = (colorpart*) &col;
   return c[i];
@@ -146,8 +146,7 @@ vec  operator &  (const vec a, const vec b) { return vec(a.x*b.x-a.y*b.y, a.x*b.
 vec vmin(vec a, vec b) { return vec(min(a.x, b.x),  min(a.y, b.y)); }
 vec vmax(vec a, vec b) { return vec(max(a.x, b.x),  max(a.y, b.y)); }
 
-// rectangles
-// (nieprzetestowane!)
+// rectangles (untested)
 //============
 
 struct rec {
@@ -164,8 +163,7 @@ bool inrec(const vec& v, const rec &r) {
   return v.x >= r.c1.x && v.y >= r.c1.y && v.x <= r.c2.x && v.y <= r.c2.y;
   }
 
-// transformations
-// (nieprzetestowane!)
+// transformations (untested)
 //=================
 
 struct xform {
@@ -222,7 +220,7 @@ vec operator * (const xform &a, vec b) { b.tform(a); return b; }
 
 struct style {
   int stroke, fill;
-  ld width; // uwaga: 'width' dziala tylko w drawSvg, nie w drawSDL
+  ld width; // note: 'width' works only in svg
   string extra;
   style(int st, int fi, ld wi) : stroke(st), fill(fi), width(wi) {}
   };
@@ -353,7 +351,7 @@ struct fontdata {
   #endif
     }
   
-  // pomocnicze
+  // auxiliary
   vec textsize(int siz, const string &str) {
   #ifdef UTTF
     if(str.size() == 0 || siz <= 0) return vec(0,0);
@@ -702,7 +700,7 @@ rec text::bbox() const {
 
 #ifdef USDL
 
-// inicjalizacja grafiki
+// initialize graphics
 void initGraph(int sx, int sy, const string& title, int flags) {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     printf("SDL error\n");
@@ -716,7 +714,7 @@ void initGraph(int sx, int sy, const string& title, int flags) {
   SDL_EnableUNICODE(1);
   }
 
-// wypisuje napis, alx=0 (left align), alx=2 (right align), alx=1 (centralnie)
+// display text, alx=0 (left align), alx=2 (right align), alx=1 (centered)
 void text::drawSDL(bitmap &tgt) {
 #ifdef UTTF
   tgt.beunlocked();
@@ -750,19 +748,19 @@ void text::drawSDL(bitmap &tgt) {
 #ifdef UGD
 #include <gd.h>
 #endif
-// tworzymy pomocniczy Surface
+// we create an aux Surface
 SDL_Surface *emptySurface(int sx, int sy) {
   return SDL_CreateRGBSurface(SDL_SWSURFACE, sx, sy, 32, 0xFF<<16,0xFF<<8,0xFF,0xFF<<24);
   }
 
 bitmap emptyBitmap(int sx, int sy) {
-  return bitmap {emptySurface(sx, sy)};
+  return bitmap(emptySurface(sx, sy), true, false);
   }
 
-int alphamult = 1; // nie wiem czy 1 czy 2
+int alphamult = 1; // don't know if 1 or 2
 
 #ifdef UGD
-// Surface na podstawie GD
+// Surface based on GD
 bitmap fromGD(gdImagePtr im) {
   bitmap tgt = emptyBitmap(im->sx, im->sy);
   for(int y=0; y<im->sy; y++)
@@ -794,9 +792,7 @@ gdImagePtr toGD(const bitmap &bmp) {
   return im;
   }
 
-// czytanie z .png
-// (wole uzywac biblioteki GD zamiast SDL_Image, bo w ten sposob moge tez
-// zapisywac)
+// reading from .png
 bitmap readPng(const string& fname) {
   FILE *f = fopen(fname.c_str(), "rb");
   gdImagePtr im = gdImageCreateFromPng(f);
