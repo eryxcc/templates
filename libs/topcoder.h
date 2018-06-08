@@ -70,7 +70,7 @@ typedef complex<ld> cld;
 //@? 0workset ! LS
 #define LS <
 //@@
-#define Size(x) (int(x.size()))
+#define Size(x) (int((x).size()))
 //@? CLC
 // execute "act", and return "val" as an expression result
 #define CLC(act,val) ([&] () {act; return (val); } ())
