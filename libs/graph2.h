@@ -256,10 +256,10 @@ struct bitmap {
     if(isscreen) beunlocked(), SDL_UpdateRect(s, 0, 0, 0, 0);
     }
   void belocked() {
-    if(isscreen && !locked) locked = true, SDL_LockSurface(s);
+    if(isscreen && !locked && SDL_MUSTLOCK(s)) locked = true, SDL_LockSurface(s);
     }
   void beunlocked() {
-    if(isscreen && locked) locked = false, SDL_UnlockSurface(s);
+    if(isscreen && locked && SDL_MUSTLOCK(s)) locked = false, SDL_UnlockSurface(s);
     }
   pixelrow operator [] (int y) const {
     if(y<0 || y>=s->h) return pixelrow {&errpixel, 1};
@@ -269,12 +269,18 @@ struct bitmap {
     return pixelrow{ptr, s->w};
     }
   ~bitmap() { if(s && !isscreen) SDL_FreeSurface(s); }
-  };
+  bitmap& operator= (bitmap&& b) { s = b.s; locked = b.locked; isscreen = b.isscreen; b.s = NULL; return *this; }
+  bitmap(bitmap&& b) { s = b.s; locked = b.locked; isscreen = b.isscreen; b.s = NULL; }
+  bitmap(SDL_Surface *s, bool l, bool is) : s(s), locked(l), isscreen(is) {}
+  bitmap() { s = NULL; }
+  };                           
 
-bitmap screen { NULL, false, true };
+bitmap screen ( NULL, false, true );
 
 bitmap surfaceToBitmap(SDL_Surface *s) {
-  return bitmap {s, true, false };
+  bitmap b;
+  b.s = s; b.locked = true; b.isscreen = false;
+  return b;
   }
 #endif
 
