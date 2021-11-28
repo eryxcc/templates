@@ -273,6 +273,7 @@ struct bitmap {
   bitmap(bitmap&& b) { s = b.s; locked = b.locked; isscreen = b.isscreen; b.s = NULL; }
   bitmap(SDL_Surface *s, bool l, bool is) : s(s), locked(l), isscreen(is) {}
   bitmap() { s = NULL; }
+  void clearMemory() { if(s && !isscreen) SDL_FreeSurface(s), s = nullptr; }
   };                           
 
 bitmap screen ( NULL, false, true );
