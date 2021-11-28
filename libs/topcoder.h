@@ -483,11 +483,13 @@ template<class T> struct matrix {
   };
 
 template<class T> matrix<T> operator += (matrix<T>& A, matrix<T> B) {
-  FOR(i,0,Size(A.data)) A.data[i] += B.data[i]; return A;
+  FOR(i,0,isize(A.data)) A.data[i] += B.data[i];
+  return A;
   }
 
 template<class T> matrix<T> operator -= (matrix<T>& A, matrix<T> B) {
-  FOR(i,0,Size(A.data)) A.data[i] -= B.data[i]; return A;
+  FOR(i,0,isize(A.data)) A.data[i] -= B.data[i];
+  return A;
   }
 
 template<class T> matrix<T> operator + (matrix<T> A, matrix<T> B) { return A+=B; }
