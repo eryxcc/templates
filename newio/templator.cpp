@@ -17,7 +17,7 @@ vector<string> tokenize(string s) {
   s = s + " ";
   string buf = "";
   vs res;
-  for(int k=5; k<Size(s); k++)
+  for(int k=5; k<isize(s); k++)
     if(s[k] == ' ') {res.push_back(buf); buf = "";}
     else buf += s[k];
   return res;
@@ -29,7 +29,7 @@ bool truecond(string s) {
   bool cur = false;
   vector<string> v = tokenize(s);
   tokres = v[0];
-  FOR(k,0,Size(v)) {
+  FOR(k,0,isize(v)) {
     if(v[k] == "&") {
       if(!cur) return false;
       cur = false;
@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
     
     string zbuf = buf; zbuf += " ";
     string tmp = "";
-    FOR(k,0,Size(zbuf)) {
+    FOR(k,0,isize(zbuf)) {
       if(isalnum(zbuf[k])) tmp += zbuf[k];
       else {if(tmp != "") tokens.insert(tmp); tmp = "";}
       }
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
   FILE *g = fopen(argv[2], "wt");
   
   // include the input...
-  FOR(k,0,Size(src)) {
+  FOR(k,0,isize(src)) {
     if(src[k] != "#include <topcoder.h>") {
       fprintf(g, "%s\n", src[k].c_str());
       fflush(g);

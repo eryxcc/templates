@@ -45,12 +45,12 @@ typedef vector<ll> vll;
 typedef vector<string> vs;
 //@? cll
 typedef complex<ll> cll;
-//@? cld
+//@? cld hprint hprintln
 typedef complex<ld> cld;
 //@@
 
 //@+ FOR parsevi parsevs matrix addguards
-//@+ Size parsevi parsevs matrix addguards
+//@+ isize parsevi parsevs matrix addguards
 //@+ FIRST FIRSTMIN 
 //@+ MIN FIRSTMIN
 //@+ 0gccops FIRSTMIN
@@ -70,7 +70,7 @@ typedef complex<ld> cld;
 //@? 0workset ! LS
 #define LS <
 //@@
-#define Size(x) (int((x).size()))
+#define isize(x) (int((x).size()))
 //@? CLC
 // execute "act", and return "val" as an expression result
 #define CLC(act,val) ([&] () {act; return (val); } ())
@@ -141,7 +141,7 @@ vi parsevi(string s) {
   s = s + " ";
   int q = 0;
   vi res;
-  FOR(l,0, Size(s)) {
+  FOR(l,0, isize(s)) {
     if(s[l] == ' ') { res.push_back(q); q = 0;}
     else { q = q * 10 + s[l] - '0'; }
     }
@@ -155,7 +155,7 @@ vs parsevs(string s) {
   s = s + " ";
   string q = "";
   vs res;
-  FOR(l,0, Size(s)) {
+  FOR(l,0, isize(s)) {
     if(s[l] == ' ') { res.push_back(q); q = "";}
     else { q += s[l]; }
     }
@@ -261,9 +261,9 @@ FOR(k,0,100) FOR(i,0,100) FOR(j,0,100) w0[i][j] <?= w0[i][k] + w0[k][j];
 vs addguards(vs data, char guard) {
   vs res;
   string border;
-  FOR(k,0,Size(data[0])+2) border += guard;
+  FOR(k,0,isize(data[0])+2) border += guard;
   res.push_back(border);
-  FOR(k,0,Size(data)) res.push_back(guard + data[k] + guard);
+  FOR(k,0,isize(data)) res.push_back(guard + data[k] + guard);
   res.push_back(border);
   return res;
   }
@@ -608,9 +608,9 @@ string timestamp_str() { return timestamp(); }
 //@? linesplit
 
 void powerlogger(FILE *f, const string& header, string data, bool binarylog = false, int maxlog = 1024) {
-  if(!f || Size(data) == 0) return;
-  if(Size(data) > maxlog) {
-    fprintf(f, "%s (%d bytes)\n", header.c_str(), Size(data));
+  if(!f || isize(data) == 0) return;
+  if(isize(data) > maxlog) {
+    fprintf(f, "%s (%d bytes)\n", header.c_str(), isize(data));
     fflush(f);
     return;
     }
@@ -618,7 +618,7 @@ void powerlogger(FILE *f, const string& header, string data, bool binarylog = fa
   if(binarylog) {
     string plain;
     int inl = 0;
-    for(int i=0; i<Size(data); i++) {
+    for(int i=0; i<isize(data); i++) {
       // fprintf(f, "[i%dl%d]", i, inl);
       if(inl == 0) 
         fprintf(f, "%s ", header.c_str());
@@ -632,7 +632,7 @@ void powerlogger(FILE *f, const string& header, string data, bool binarylog = fa
         }
       }
     if(inl) {
-      if(Size(data) > 16) while(inl<16) fprintf(f, "   "), inl++;
+      if(isize(data) > 16) while(inl<16) fprintf(f, "   "), inl++;
       fprintf(f, "%s\n", plain.c_str());
       }
     fflush(f);
@@ -640,13 +640,13 @@ void powerlogger(FILE *f, const string& header, string data, bool binarylog = fa
     }
   
   int lasteol = 0;
-  for(int i=1; i<Size(data); i++) if(data[i] == '\n') {
+  for(int i=1; i<isize(data); i++) if(data[i] == '\n') {
     data[i] = 0;
     fprintf(f, "%s %s\n", header.c_str(), data.c_str() + lasteol);
     data[i] = '\n';
     lasteol = i+1;
     }
-  if(lasteol != Size(data)) {
+  if(lasteol != isize(data)) {
     fprintf(f, "%s %s (+)\n", header.c_str(), data.c_str() + lasteol);
     }
   fflush(f);
