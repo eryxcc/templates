@@ -15,11 +15,11 @@
 #include <math.h>
 //@? cin cout cerr
 #include <iostream>
-//@? set
+//@? set hprint hprintln
 #include <set>
-//@? map MKey MRet
+//@? map MKey MRet hprint hprintln
 #include <map>
-//@? cll cld
+//@? cll cld hprint hprintln
 #include <complex>
 //@? istringstream ostringstream
 #include <sstream>
@@ -29,13 +29,17 @@
 #include <stdlib.h>
 //@? strcmp
 #include <string.h>
+//@? fts hprint hprintln
+#include <sstream>
+//@? hprint hprintln
+#include <stdarg.h>
 //@@
 using namespace std;
 //@@
 
 //@? ll bitc gcd cll fll parsevll getLL modar modarP
 typedef long long ll;
-//@? ld cld
+//@? ld cld hprint hprintln
 typedef long double ld;
 //@? vi parsevi getVI
 typedef vector<int> vi;
@@ -217,7 +221,7 @@ ll gcd(ll x, ll y) {return x ? gcd(y%x,x) : y;}
 string cts(char c) {string s=""; s+=c; return s;}
 //@@
 
-//@? its
+//@? its hprint hprintln
 // int to string
 string its(int i) {char buf[200]; sprintf(buf, "%d", i); return buf;}
 //@@
@@ -587,7 +591,7 @@ FILE *debuglog = stderr;
 //@? scanerr
 char *scanerrp;
 
-//@? timestamp
+//@? timestamp hprint hprintln
 // "%F %T"
 string stampformat = "%T";
 
@@ -699,6 +703,9 @@ void ansiclear(FILE *f = stdout) {
   fprintf(f, "\033[0m");
   }  
 
+//@? xcomment
+// sum of a[0]+a[1]+...+a[qty-1], where a[0]=qty0, a[1]=qty1, etc.
+
 //@? seriessum1
 TDEF modarP seriessum1(modarP qty, modarP val0) {
   return qty * val0;
@@ -723,6 +730,171 @@ TDEF modarP seriessum4(modarP qty, modarP val0, modarP val1, modarP val2, modarP
     (val2-(val1+val1-val0)) * qty * (qty-1) * (qty-2) / 6 +
     (val3-val2*3+val1*3-val0) * qty * (qty-1) * (qty-2) * (qty-3) / 24;
   }
+
+//@? DEB
+#ifdef DEBUG
+#define DEB(x) x
+#else
+#define DEB(x)
+#endif
+
+//@? hprint hprintln
+
+struct hstream {
+  virtual void write_char(char c) = 0;
+  virtual void write_chars(const char* c, size_t q) { while(q--) write_char(*(c++)); }
+  };
+
+struct shstream : hstream { 
+  string s;
+  int pos;
+  shstream(const string& t = "") : s(t) { pos = 0; }
+  virtual void write_char(char c) override { s += c; }
+  };
+
+inline void print(hstream& hs) {}
+
+template<class... CS> string sprint(const CS&... cs) { shstream hs; print(hs, cs...); return hs.s; }
+
+template<class... CS> void println(hstream& hs, const CS&... cs) { print(hs, cs...); hs.write_char('\n'); }
+
+template<class C, class C1, class... CS> void print(hstream& hs, const C& c, const C1& c1, const CS&... cs) { print(hs, c); print(hs, c1, cs...); }
+
+string fts(ld x, int prec = 6) {
+  std::stringstream ss;
+  ss.precision(prec);
+  ss << x;
+  return ss.str();
+  }
+
+inline void print(hstream& hs, const string& s) { hs.write_chars(s.c_str(), isize(s)); }
+inline void print(hstream& hs, int i) { print(hs, its(i)); }
+inline void print(hstream& hs, ld x) { print(hs, fts(x, 6)); }
+
+template<class T, class U> void print(hstream& hs, const pair<T, U> & t) { print(hs, "(", t.first, ",", t.second, ")"); }
+
+struct comma_printer {
+  bool first;
+  hstream& hs;
+  template<class T> void operator() (const T& t) { if(first) first = false; else print(hs, ","); print(hs, t); }
+  comma_printer(hstream& hs) : first(true), hs(hs) {}
+  };
+
+template<class T> void ignore_(T&&) { }
+
+// copied from: https://stackoverflow.com/questions/16387354/template-tuple-calling-a-function-on-each-element
+
+namespace detail
+{
+    template<int... Is>
+    struct seq { };
+
+    template<int N, int... Is>
+    struct gen_seq : gen_seq<N - 1, N - 1, Is...> { };
+
+    template<int... Is>
+    struct gen_seq<0, Is...> : seq<Is...> { };
+
+    template<typename T, typename F, int... Is>
+    void for_each(T&& t, F f, seq<Is...>)
+    {
+        auto l = { (f(std::get<Is>(t)), 0)... }; ignore_(l);
+    }
+}
+
+template<typename... Ts, typename F>
+void for_each_in_tuple(std::tuple<Ts...> const& t, F f)
+{
+    detail::for_each(t, f, detail::gen_seq<sizeof...(Ts)>());
+}
+
+template<class... T> void print(hstream& hs, const tuple<T...> & t) { 
+  print(hs, "(");
+  comma_printer p(hs);
+  for_each_in_tuple(t, p);
+  print(hs, ")");
+  }
+
+template<class T, size_t X> void print(hstream& hs, const array<T, X>& a) { print(hs, "("); comma_printer c(hs); for(const T& t: a) c(t); print(hs, ")"); }
+template<class T> void print(hstream& hs, const vector<T>& a) { print(hs, "("); comma_printer c(hs); for(const T& t: a) c(t); print(hs, ")"); }
+template<class T> void print(hstream& hs, const set<T>& a) { print(hs, "{"); comma_printer c(hs); for(const T& t: a) c(t); print(hs, "}"); }
+template<class T, class U> void print(hstream& hs, const map<T,U>& a) { print(hs, "{"); comma_printer c(hs); for(const auto& t: a) c(t); print(hs, "}"); }
+
+struct logger : hstream {
+  bool stamps;
+  int indentation;
+  bool doindent;
+  logger() { doindent = false; stamps = false; }
+  virtual void write_char(char c) { if(doindent) { doindent = false; 
+    if(stamps) printf("%s ", timestamp());
+    for(int i=0; i<indentation; i++) putchar(' '); } putchar(c); if(c == 10) doindent = true; }
+  };
+
+inline logger hlog;
+
+template<class... T> void hprintln(T... t) { println(hlog, t...); }
+template<class... T> void hprint(T... t) { print(hlog, t...); }
+
+inline string format(const char *fmt, ...) {
+  char buf[1000];
+  va_list ap;
+  va_start(ap, fmt);
+  vsnprintf(buf, 1000, fmt, ap);
+  va_end(ap);
+  return buf;
+  }
+
+struct indenter {
+  int val;
+  
+  indenter(int i = 2) { 
+    val = i;
+    hlog.indentation += i;
+    }
+  
+  ~indenter() { hlog.indentation -= val; }
+  };
+
+struct indenter_finish : indenter {
+  indenter_finish(bool b = true): indenter(b ? 2:0) {}
+  ~indenter_finish() { if(val) println(hlog, "(done)"); }
+  };
+
+void print(hstream& hs, cld x) { 
+  int parts = 0;
+  if(real(x)) {
+    print(hs, real(x)); 
+    parts++;
+    }
+  
+  if(imag(x)) {
+    if(parts && imag(x) > 0) print(hs, "+");
+    parts++;
+    print(hs, imag(x), "i"); 
+    }
+  
+  if(!parts) print(hs, 0);
+  }
+
+template<class... T> string lalign(int len, T... t) {
+  shstream hs;
+  print(hs, t...);
+  while(isize(hs.s) < len) hs.s += " ";
+  return hs.s;
+  }
+
+//@? among
+
+template<class T, class V, class... U> bool among(T x, V y) { return x == y; }
+template<class T, class V, class... U> bool among(T x, V y, U... u) { return x==y || among(x,u...); }
+
+//@? make_array
+template<class T> array<T, 4> make_array(T a, T b, T c, T d) { array<T,4> x; x[0] = a; x[1] = b; x[2] = c; x[3] = d; return x; }
+template<class T> array<T, 3> make_array(T a, T b, T c) { array<T,3> x; x[0] = a; x[1] = b; x[2] = c; return x; }
+template<class T> array<T, 2> make_array(T a, T b) { array<T,2> x; x[0] = a; x[1] = b; return x; }
+
+//@? rv
+// namespace rv { using namespace std::ranges; using namespace std::views; }
 
 //@? includeinfo
 #endif
